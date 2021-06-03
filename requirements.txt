@@ -1,4 +1,4 @@
--e git+git@bitbucket.org:annalect/annalectpy.git@43079286ff4995cff0726c3fe92dc825933bf6a5#egg=annalectpy
+-e git+git@bitbucket.org:annalect/
 ansi2html==1.6.0
 appnope==0.1.2
 backcall==0.2.0
