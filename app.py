@@ -57,6 +57,8 @@ definitions_table = pd.DataFrame([
 app.layout = html.Div(children=[
     html.H1(children='Brand Distancing - By Month - 2020'),
     html.Label('Months'),
+    html.H4(children=f'''Starting instructions: pick two domain categories that you think are worth exploring against one another. Double click the graph to get the best axis fit and set the x and y min/max for optimal viewing (.02 +- your min and max is a good starting point)
+    Then, start sliding across the months one by one and see if you can notice any changes in how the brand audiences shift against one another or as groups of domains. The axes represent the overlap of that brand audience (in that month) in that chosen category'''),
     dcc.Slider(
         id='month-slider',
         min=month_min,
@@ -67,7 +69,7 @@ app.layout = html.Div(children=[
     dcc.Graph(
         id='scatter-plot'
     ),
-    html.Div(["X-Axis Choice and axis maximum",dcc.Dropdown(
+    html.Div(["X-Axis Choice (Domain Category)",dcc.Dropdown(
                 id='x-axis-column',
                 options=[{'label': i, 'value': i} for i in cols_save],
                 value=cols_save[0]
@@ -90,7 +92,7 @@ app.layout = html.Div(children=[
             )
              ], style={'columnCount': 3}),
 #     html.Div("\n"),
-    html.Div(["Y-Axis Choice and axis maximum",dcc.Dropdown(
+    html.Div(["Y-Axis Choice (Domain Category)",dcc.Dropdown(
                 id='y-axis-column',
                 options=[{'label': i, 'value': i} for i in cols_save],
                 value=cols_save[1]
