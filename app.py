@@ -27,7 +27,7 @@ data_dict = pickle.load(open("data_dict_v6.pkl","rb"))
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = JupyterDash(__name__, external_stylesheets=external_stylesheets)
 # Create server variable with Flask server object for use with gunicorn
-# server = app.server
+server = app.server
 
 months = [int(x) for x in sorted(data_dict.keys())]
 
