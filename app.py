@@ -22,59 +22,40 @@ import pickle
 
 
 
-data_dict = pickle.load(open("data_dict.pkl","rb"))
+data_dict = pickle.load(open("data_dict_v6.pkl","rb"))
 # data_dict[1][2]
-
-
-
-
-# data_dict[1][0] #pca dataframe
-# data_dict[1][1] #explained variance
-# data_dict[1][2] #sizes dataframe
-
-n_components = 2
-col_names = [f"Principal Component {x+1}" for x in range(n_components)]
-
-
-
-
-
-
-
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = JupyterDash(__name__, external_stylesheets=external_stylesheets)
-server = app.server
+# Create server variable with Flask server object for use with gunicorn
+# server = app.server
 
 months = [int(x) for x in sorted(data_dict.keys())]
-# print(months)
+
 month_min = min(months)
 month_max = max(months)
 month_names = ["Jan","Feb","Mar","Apr","May","June","July","Aug","Sept","Oct","Nov","Dec"]
 month_default = 1
 
+cols_save = data_dict[0][0].columns
 
-# fig = px.scatter(data_frame = piv_transformed.reset_index(),x='pca_0',y='pca_1',hover_name='brand_label')
 
 definitions_table = pd.DataFrame([
-    ["Tesla","tesla.com OR tesla page on cars.com/carmax/kbb",""]
-    ,["Ford","ford.com OR ford page on cars.com/carmax/kbb",""]
-    ,["VW","vw.com OR volkswagen page on cars.com/carmax/kbb",""]
-    ,["Chevrolet","chevrolet.com OR chevrolet page on cars.com/carmax/kbb",""]
-    ,["HomeDepot","homedepot.com",""]
-    ,["Lowes","lowes.com",""]
-    ,["Nike","nike.com",""]
+    ["Nike","nike.com",""]
     ,["Adidas","adidas.com",""]
+    ,["lululemon","lululemon.com",""]
     ,["Chanel","chanel.com",""]
-    ,["McDonalds","mcdonalds.com or McD app",""]
-    ,["WholeFoods","wholefoodsmarket.com",""]
-    ,["BeyondMeat","beyondmeat.com OR %beyond%meat% product page on Amazon, Walmart, WholeFoods",""]
-    ,["HarryStyles","","%harry%styles%"]
-    ,["TaylorSwift","","%taylor%swift%"]
-    ,["PatrickMahomes","","%patrick%mahomes%"]
+    ,["Nordstrom","nordstrom.com",""]
+    ,["Nieman Marcus","neimanmarcus.com",""]
+    ,["Saks Fifth Avenue","saksfifthavenue.com",""]
+    ,["Gap","gap.com",""]
+    ,["H&M","hm.com",""]
+    ,["Zara","zara.com",""]
+    ,["Abercrombie","abercrombie.com",""]
+    ,["Uniqlo","uniqlo.com",""]
 ],columns=["Brand","Site Actions","Search Actions (%=Wildcard)"])
 
 app.layout = html.Div(children=[
-    html.H1(children='Brand Distancing By Month - 2020'),
+    html.H1(children='Brand Distancing - By Month - 2020'),
     html.Label('Months'),
     dcc.Slider(
         id='month-slider',
@@ -83,11 +64,55 @@ app.layout = html.Div(children=[
         marks={i: f"{month_names[int(i)-1]}" for i in months},
         value=month_min
     ),
-    html.Div(id="exp-var"),
-
     dcc.Graph(
         id='scatter-plot'
     ),
+    html.Div(["X-Axis Choice and axis maximum",dcc.Dropdown(
+                id='x-axis-column',
+                options=[{'label': i, 'value': i} for i in cols_save],
+                value=cols_save[0]
+            )
+            ,html.Label('x min'),dcc.Input(
+            id='x-axis-min',
+            type='number',
+            value=-.01,
+            min=-0.5,
+            max=1,
+            step=0.01
+            )
+            ,html.Label('x max'),dcc.Input(
+            id='x-axis-max',
+            type='number',
+            value=.05,
+            min=-0.5,
+            max=1,
+            step=0.01
+            )
+             ], style={'columnCount': 3}),
+#     html.Div("\n"),
+    html.Div(["Y-Axis Choice and axis maximum",dcc.Dropdown(
+                id='y-axis-column',
+                options=[{'label': i, 'value': i} for i in cols_save],
+                value=cols_save[1]
+            )
+             ,html.Label('y min'),dcc.Input(
+            id='y-axis-min',
+            type='number',
+            value=-.01,
+            min=-0.5,
+            max=1,
+            step=0.01
+            )
+          ,html.Label('y max'),dcc.Input(
+            id='y-axis-max',
+            type='number',
+            value=.05,
+            min=-0.5,
+            max=1,
+            step=0.01
+            )
+             ], style={'columnCount': 3}),
+    
     html.H1(children="Brand Definitions:"),
     html.Div(dash_table.DataTable(
         id='brand-definitions',
@@ -102,33 +127,33 @@ app.layout = html.Div(children=[
 
 @app.callback(
 Output('scatter-plot','figure'),
-[Input('month-slider','value')]
+[Input('month-slider','value'),Input('x-axis-column','value'),Input('y-axis-column','value')
+,Input('x-axis-min','value'),Input('x-axis-max','value')\
+,Input('y-axis-min','value'),Input('y-axis-max','value') 
+]
 )
-def update_graph(selected_month):
+def update_graph(selected_month,x_axis_column,y_axis_column,x_min_use,x_max_use,y_min_use,y_max_use):
+        
     df_use = data_dict[selected_month][0]
-    df_size = data_dict[selected_month][2]
+    df_size = data_dict[selected_month][1]
     df_size.columns=["brand_label","size"]
     df_use = df_use.merge(right=df_size,on='brand_label')
-    
     fig = px.scatter(data_frame = df_use
-                     ,x=col_names[0]
-                     ,y=col_names[1]
+                     ,x=x_axis_column
+                     ,y=y_axis_column
                      ,color='brand_label'
                      ,text='brand_label'
                      ,size='size'
-                     ,hover_name='brand_label')
-    fig.update_layout(transition_duration=100)
-    
-    return fig
-
-@app.callback(
-Output('exp-var','children'),
-[Input('month-slider','value')]
-)
-def update_exp_var(selected_month):
-    exp_var = data_dict[selected_month][1]
-    return f"Explained Variance this Month: {round(exp_var,4)}"
-    
+                     ,hover_name='brand_label'
+                    ,labels={
+                     "brand_label": "Brand Label",
+                     "size": "Number of Visitors"
+                     })
+        
+    fig.update_xaxes(range=[x_min_use, x_max_use])
+    fig.update_yaxes(range=[y_min_use, y_max_use])
+    fig.update_layout(transition_duration=500)
+    return fig  
     
 
 if __name__ == '__main__':
