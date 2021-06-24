@@ -36,7 +36,7 @@ month_max = max(months)
 month_names = ["Jan","Feb","Mar","Apr","May","June","July","Aug","Sept","Oct","Nov","Dec"]
 month_default = 1
 
-cols_save = data_dict[0][0].columns
+cols_save = data_dict[1][0].columns
 
 
 definitions_table = pd.DataFrame([
