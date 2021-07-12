@@ -1,13 +1,4 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-
-
-
-from sklearn.decomposition import PCA
-from sklearn.preprocessing import StandardScaler
-
-# !pip install jupyter-dash
+import pickle
 from jupyter_dash import JupyterDash
 import dash
 import dash_core_components as dcc
@@ -16,28 +7,29 @@ import dash_table
 from dash.dependencies import Input, Output
 import pandas as pd
 import plotly.express as px
-import pickle
+
+
+with open('data_dict_v6.pkl', 'rb') as handle:
+    data_dict = pickle.load(handle)
+
+with open('axes_nums_v6.pkl', 'rb') as handle:
+    axes_nums = pickle.load(handle)
 
 
 
+cols_save = list(axes_nums.index.values)
 
 
-data_dict = pickle.load(open("data_dict_v6.pkl","rb"))
-# data_dict[1][2]
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = JupyterDash(__name__, external_stylesheets=external_stylesheets)
 # Create server variable with Flask server object for use with gunicorn
 server = app.server
 
-months = [int(x) for x in sorted(data_dict.keys())]
-
-month_min = min(months)
-month_max = max(months)
-month_names = ["Jan","Feb","Mar","Apr","May","June","July","Aug","Sept","Oct","Nov","Dec"]
-month_default = 1
-
-cols_save = data_dict[1][0].columns
-
+quarters_menu = [x for x in quarters_run]
+# print(months)
+quarter_first = quarters_menu[0]
+quarter_last = quarters_menu[-1]
+quarter_default = quarter_first
 
 definitions_table = pd.DataFrame([
     ["Nike","nike.com",""]
@@ -55,65 +47,35 @@ definitions_table = pd.DataFrame([
 ],columns=["Brand","Site Actions","Search Actions (%=Wildcard)"])
 
 app.layout = html.Div(children=[
-    html.H1(children='Brand Distancing - By Month - 2020'),
-    html.Label('Months'),
+    html.H1(children='Brand Distancing - By Quarter - 2020'),
+    html.Label('Quarter'),
     dcc.Slider(
-        id='month-slider',
-        min=month_min,
-        max=month_max,
-        marks={i: f"{month_names[int(i)-1]}" for i in months},
-        value=month_min
+        id='quarter-slider',
+        min=0,
+        max=3,
+        marks={quarter_idx: quarter for quarter_idx,quarter in enumerate(quarters_menu)},
+        value=0
     ),
-    html.H6(children=f'''Starting instructions: pick two domain categories that you think are worth exploring against one another. Double click the graph to get the best axis fit and set the x and y min/max for optimal viewing (.02 +- your min and max is a good starting point)
-    Then, start sliding across the months one by one and see if you can notice any changes in how the brand audiences shift against one another or as groups of domains. The axes represent the overlap of that brand audience (in that month) in that chosen category'''),
+    dcc.RadioItems(
+                id='graph-type',
+                options=[{'label': i, 'value': i} for i in ['Pct', 'Delta from Random']],
+                value='Pct',
+                labelStyle={'display': 'inline-block'}
+            ),
     dcc.Graph(
         id='scatter-plot'
     ),
-    html.Div(["X-Axis Choice (Domain Category)",dcc.Dropdown(
+    html.Div(["Y-Axis Choice",dcc.Dropdown(
+                id='y-axis-column',
+                options=[{'label': i, 'value': i} for i in cols_save],
+                value=cols_save[1]
+            ),"X-Axis Choice",dcc.Dropdown(
                 id='x-axis-column',
                 options=[{'label': i, 'value': i} for i in cols_save],
                 value=cols_save[0]
             )
-            ,html.Label('x min'),dcc.Input(
-            id='x-axis-min',
-            type='number',
-            value=-.01,
-            min=-0.5,
-            max=1,
-            step=0.01
-            )
-            ,html.Label('x max'),dcc.Input(
-            id='x-axis-max',
-            type='number',
-            value=.05,
-            min=-0.5,
-            max=1,
-            step=0.01
-            )
-             ], style={'columnCount': 3}),
-#     html.Div("\n"),
-    html.Div(["Y-Axis Choice (Domain Category)",dcc.Dropdown(
-                id='y-axis-column',
-                options=[{'label': i, 'value': i} for i in cols_save],
-                value=cols_save[1]
-            )
-             ,html.Label('y min'),dcc.Input(
-            id='y-axis-min',
-            type='number',
-            value=-.01,
-            min=-0.5,
-            max=1,
-            step=0.01
-            )
-          ,html.Label('y max'),dcc.Input(
-            id='y-axis-max',
-            type='number',
-            value=.05,
-            min=-0.5,
-            max=1,
-            step=0.01
-            )
-             ], style={'columnCount': 3}),
+             ], style={"width": "50%"}
+            ),
     
     html.H1(children="Brand Definitions:"),
     html.Div(dash_table.DataTable(
@@ -129,45 +91,81 @@ app.layout = html.Div(children=[
 
 @app.callback(
 Output('scatter-plot','figure'),
-[Input('month-slider','value'),Input('x-axis-column','value'),Input('y-axis-column','value')
-,Input('x-axis-min','value'),Input('x-axis-max','value')\
-,Input('y-axis-min','value'),Input('y-axis-max','value') 
+[Input('quarter-slider','value'),Input('x-axis-column','value'),Input('y-axis-column','value')
+ ,Input("graph-type",'value')
 ]
 )
-def update_graph(selected_month,x_axis_column,y_axis_column,x_min_use,x_max_use,y_min_use,y_max_use):
+def update_graph(selected_quarter,x_axis_column,y_axis_column,graph_type):       
+    df_use = data_dict[selected_quarter][0]
+    df_random = data_dict[selected_quarter][1]
+    df_size = data_dict[selected_quarter][2]
+    
+    
+
+    df_pct =         pd.concat([data_dict[selected_quarter][0],data_dict[selected_quarter][1]]).merge(data_dict[selected_quarter][2],on='brand_label',how='left')        .fillna(value={"total_guids":round(data_dict[selected_quarter][2]['total_guids'].mean())})
+    
+    df_delta = data_dict[selected_quarter][4].merge(data_dict[selected_quarter][2],on='brand_label',how='left')
+    
+    
+    if graph_type == "Pct":
+    
+        fig = px.scatter(data_frame = df_pct
+                         ,x=x_axis_column
+                         ,y=y_axis_column
+                         ,color='brand_label'
+                         ,text='brand_label'
+                         ,size='total_guids'
+                         ,hover_name='brand_label'
+                        ,labels={
+                         "brand_label": "Brand Label",
+                         "total_guids": "Number of Visitors"
+                         })
+
+
+        x_min = axes_nums.loc[x_axis_column]['min']
+        x_max = axes_nums.loc[x_axis_column]['max']
+
+        y_min = axes_nums.loc[y_axis_column]['min']
+        y_max = axes_nums.loc[y_axis_column]['max']
         
-    df_use = data_dict[selected_month][0]
-    df_size = data_dict[selected_month][1]
-    df_size.columns=["brand_label","size"]
-    df_use = df_use.merge(right=df_size,on='brand_label')
-    fig = px.scatter(data_frame = df_use
-                     ,x=x_axis_column
-                     ,y=y_axis_column
-                     ,color='brand_label'
-                     ,text='brand_label'
-                     ,size='size'
-                     ,hover_name='brand_label'
-                    ,labels={
-                     "brand_label": "Brand Label",
-                     "size": "Number of Visitors"
-                     })
+    else: #graph_type = "Delta from Random"
+        fig = px.scatter(data_frame = df_delta
+                         ,x=x_axis_column
+                         ,y=y_axis_column
+                         ,color='brand_label'
+                         ,text='brand_label'
+                         ,size='total_guids'
+                         ,hover_name='brand_label'
+                        ,labels={
+                         "brand_label": "Brand Label",
+                         "total_guids": "Number of Visitors"
+                         })
         
-    fig.update_xaxes(range=[x_min_use, x_max_use])
-    fig.update_yaxes(range=[y_min_use, y_max_use])
+        x_min = -.2
+        x_max = .2
+        
+        y_min = -.2
+        y_max = .2
+        
+
+        fig.add_shape(type="line",
+        x0=-1, y0=0, x1=1, y1=0,
+        line=dict(color="Black",width=3)
+        )
+        fig.add_shape(type="line",
+        x0=0, y0=-1, x1=0, y1=1,
+        line=dict(color="Black",width=3)
+        )
+    
+    fig.update_xaxes(range=[x_min, x_max])
+    fig.update_yaxes(range=[y_min, y_max])
     fig.update_layout(transition_duration=500)
-    return fig  
+    return fig
+ 
     
 
 if __name__ == '__main__':
     app.run_server(debug=True)
-
-
-
-
-
-
-
-
 
 
 
