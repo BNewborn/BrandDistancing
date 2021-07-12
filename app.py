@@ -25,7 +25,7 @@ app = JupyterDash(__name__, external_stylesheets=external_stylesheets)
 # Create server variable with Flask server object for use with gunicorn
 server = app.server
 
-quarters_menu = [x for x in quarters_run]
+quarters_menu = [f"Q{x+1}" for x in data_dict.keys()]
 # print(months)
 quarter_first = quarters_menu[0]
 quarter_last = quarters_menu[-1]
