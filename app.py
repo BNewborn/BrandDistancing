@@ -48,6 +48,7 @@ definitions_table = pd.DataFrame([
 
 app.layout = html.Div(children=[
     html.H1(children='Brand Distancing - By Quarter - 2020'),
+    html.Div(children='''Welcome to the brand distancing applet. Given audiences (in this case by brand), we track their online web visitation by category by each quarter across 2020. Using this data, a user should be able to track seasonal changes in visitation patterns for their audience, both relative to a random sample and to other audiences.\n\n To begin, pick two relevant web categories in the dropdowns below the graph and slowly slide the Quarter slider from Q1 to Q4. Take note of any patterns that emerge. To see how values change relative to a random sample, choose the radio selector "Delta from Random" just below''', style={"width": "50%"}),
     html.Label('Quarter'),
     dcc.Slider(
         id='quarter-slider',
@@ -90,6 +91,13 @@ app.layout = html.Div(children=[
 ])
 
 @app.callback(
+Output("quarter-slider",'value')
+,[Input("graph-type",'value')]
+)
+def update_quarterslider_on_graphtype(graph_type_change):
+    return 0
+
+@app.callback(
 Output('scatter-plot','figure'),
 [Input('quarter-slider','value'),Input('x-axis-column','value'),Input('y-axis-column','value')
  ,Input("graph-type",'value')
@@ -102,7 +110,7 @@ def update_graph(selected_quarter,x_axis_column,y_axis_column,graph_type):
     
     
 
-    df_pct =         pd.concat([data_dict[selected_quarter][0],data_dict[selected_quarter][1]]).merge(data_dict[selected_quarter][2],on='brand_label',how='left')        .fillna(value={"total_guids":round(data_dict[selected_quarter][2]['total_guids'].mean())})
+    df_pct =pd.concat([data_dict[selected_quarter][0],data_dict[selected_quarter][1]]).merge(data_dict[selected_quarter][2],on='brand_label',how='left')        .fillna(value={"total_guids":round(data_dict[selected_quarter][2]['total_guids'].mean())})
     
     df_delta = data_dict[selected_quarter][4].merge(data_dict[selected_quarter][2],on='brand_label',how='left')
     
