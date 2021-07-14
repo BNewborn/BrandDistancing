@@ -25,6 +25,8 @@ app = JupyterDash(__name__, external_stylesheets=external_stylesheets)
 # Create server variable with Flask server object for use with gunicorn
 server = app.server
 
+app.title = "Brand Distancing Applet"
+
 quarters_menu = [f"Q{x+1}" for x in data_dict.keys()]
 # print(months)
 quarter_first = quarters_menu[0]
