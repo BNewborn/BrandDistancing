@@ -12,6 +12,7 @@ import plotly.express as px
 
 import pandas as pd
 from psycopg2 import sql
+import numpy as np
 
 # Commented out for Heroku
 # x = ConnectDsdk(dsdk_username,dsdk_password)
