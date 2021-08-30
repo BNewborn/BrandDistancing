@@ -71,6 +71,8 @@ y_axis = list(np.random.choice(site_choices,1))[0]
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = JupyterDash(__name__, external_stylesheets=external_stylesheets,suppress_callback_exceptions=True)
+server = app.server
+app.title = "Brand Distancing Applet"
 
 def site_selections():
     return [html.Div([
