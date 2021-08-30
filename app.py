@@ -13,35 +13,46 @@ import plotly.express as px
 import pandas as pd
 from psycopg2 import sql
 
-x = ConnectDsdk(dsdk_username,dsdk_password)
-cur = x['cursor']
-conn = x['connection']
+# Commented out for Heroku
+# x = ConnectDsdk(dsdk_username,dsdk_password)
+# cur = x['cursor']
+# conn = x['connection']
 
 audience_creation = False
 audience_load_from_table = False
 audience_load_from_pickle = True
 
-if audience_creation:
-    print(f"Audience Creation Run")
-    query = sql.SQL(open("Cross_Viz_SQL_AudCreation.sql").read())
-    audience_params = {"input_sites":["ft.com",'wsj.com','cnbc.com']
-                       ,"subpage_desc":"%international%"
-                       ,"domain_pattern":"%.%"}
-    cross_viz_run=pd.read_sql(sql=query,con=conn,params=audience_params)
-    cross_viz_run.to_pickle("CrossVizRun.pkl")
-    print(f"\tAudience Saved Locally to pickle")
+# Commented out for Heroku
+# if audience_creation:
+#     print(f"Audience Creation Run")
+#     query = sql.SQL(open("Cross_Viz_SQL_AudCreation.sql").read())
+#     audience_params = {"input_sites":["ft.com",'wsj.com','cnbc.com']
+#                        ,"subpage_desc":"%international%"
+#                        ,"domain_pattern":"%.%"}
+#     cross_viz_run=pd.read_sql(sql=query,con=conn,params=audience_params)
+#     cross_viz_run.to_pickle("CrossVizRun.pkl")
+#     print(f"\tAudience Saved Locally to pickle")
     
-elif audience_load_from_table:
-    print(f"Audience Load from Table Run")    
-    query = sql.SQL(open("Cross_Viz_SQL_AudLoad.sql").read())    .format(input_audience=sql.Identifier("dsdk","ads_public","sample_guids_financialnews"))
-    audience_params = {"domain_pattern":"%.%"}
-    cross_viz_run=pd.read_sql(sql=query,con=conn,params=audience_params)
-    cross_viz_run.to_pickle("CrossVizRun.pkl")
-    print(f"\tAudience Saved Locally to pickle")
+# Commented out for Heroku
+# elif audience_load_from_table:
+#     print(f"Audience Load from Table Run")    
+#     query = sql.SQL(open("Cross_Viz_SQL_AudLoad.sql").read())    .format(input_audience=sql.Identifier("dsdk","ads_public","sample_guids_financialnews"))
+#     audience_params = {"domain_pattern":"%.%"}
+#     cross_viz_run=pd.read_sql(sql=query,con=conn,params=audience_params)
+#     cross_viz_run.to_pickle("CrossVizRun.pkl")
+#     print(f"\tAudience Saved Locally to pickle")
     
-elif audience_load_from_pickle:
+# Commented out for Heroku
+# elif audience_load_from_pickle:
+#     print(f"Audience Load from Pickle")    
+#     cross_viz_run=pd.read_pickle("CrossVizRun.pkl")
+
+# Comment back out when not running Heroku
+if audience_load_from_pickle:
     print(f"Audience Load from Pickle")    
     cross_viz_run=pd.read_pickle("CrossVizRun.pkl")
+else:
+    print("Nothing's going to work!")
     
     
 cross_viz_pivot = cross_viz_run.pivot_table(index='first_site',columns='cross_site',values='pct_first_site').fillna(0)
